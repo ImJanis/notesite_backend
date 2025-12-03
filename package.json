@@ -1,0 +1,52 @@
+{
+  "name": "@notesite/api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx --env-file=.env --watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "cross-env LOGGING_LEVEL=silent DOTENV_CONFIG_PATH=.env.dev tsx -r dotenv/config --test --test-concurrency=1",
+    "test:watch": "cross-env LOGGING_LEVEL=silent DOTENV_CONFIG_PATH=.env.dev tsx -r dotenv/config --test --watch --test-concurrency=1",
+    "test:coverage": "cross-env LOGGING_LEVEL=silent DOTENV_CONFIG_PATH=.env.dev c8 --all --src=src --reporter=lcov --reporter=text-summary --report-dir=coverage tsx -r dotenv/config --test --test-concurrency=1",
+    "check": "pnpm exec biome check",
+    "check:write": "pnpm exec biome check --write",
+    "type-check": "tsc --noEmit",
+    "pre-commit": "pnpm run check; pnpm run type-check",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.943.0",
+    "@aws-sdk/s3-request-presigner": "^3.943.0",
+    "@fastify/autoload": "~6.3.1",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/env": "^5.0.3",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/sensible": "~6.0.2",
+    "@fastify/swagger": "^9.6.1",
+    "@fastify/swagger-ui": "^5.2.3",
+    "@fastify/type-provider-json-schema-to-ts": "^5.0.0",
+    "@scalar/fastify-api-reference": "^1.40.0",
+    "better-auth": "^1.4.1",
+    "drizzle-orm": "^0.44.7",
+    "fastify": "~5.6.2",
+    "fastify-plugin": "~5.1.0",
+    "fastify-type-provider-zod": "^6.1.0",
+    "pg": "^8.16.3",
+    "pino": "^10.1.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.8",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.7",
+    "pino-pretty": "^13.1.2",
+    "tslib": "^2.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
