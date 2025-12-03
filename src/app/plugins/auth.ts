@@ -4,6 +4,17 @@ import fp from "fastify-plugin";
 
 import { auth } from "../lib/auth";
 
+type Session = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
+
+export function getSession(request: FastifyRequest): Session {
+  if (!request.session) {
+    throw new Error(
+      "requireAuth hook must be applied before accessing session",
+    );
+  }
+  return request.session;
+}
+
 const authPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.decorate(
     "requireAuth",
