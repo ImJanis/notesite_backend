@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const GetRecordsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export const GetRecordsResponseSchema = z.object({
   records: z.array(
     z.object({
@@ -10,6 +15,12 @@ export const GetRecordsResponseSchema = z.object({
       createdAt: z.date(),
     }),
   ),
+  pagination: z.object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+  }),
 });
 
 export const GetRecordParamsSchema = z.object({

@@ -11,6 +11,7 @@ import {
   GetPresignedUrlResponseSchema,
   GetRecordParamsSchema,
   GetRecordResponseSchema,
+  GetRecordsQuerySchema,
   GetRecordsResponseSchema,
 } from "./dtos";
 
@@ -21,19 +22,28 @@ export const recordsRoutes: FastifyPluginAsyncZod = async (fastify) => {
     "/records",
     {
       schema: {
-        response: {
-          200: GetRecordsResponseSchema,
-        },
+        querystring: GetRecordsQuerySchema,
+        response: { 200: GetRecordsResponseSchema },
       },
     },
     async (request) => {
       const userId = getSession(request).user.id;
+      const { page, limit } = request.query;
+      const offset = (page - 1) * limit;
 
-      const userRecords = await fastify.db
-        .select()
-        .from(records)
-        .where(eq(records.userId, userId))
-        .orderBy(desc(records.createdAt));
+      const [userRecords, [{ total }]] = await Promise.all([
+        fastify.db
+          .select()
+          .from(records)
+          .where(eq(records.userId, userId))
+          .orderBy(desc(records.createdAt))
+          .limit(limit)
+          .offset(offset),
+        fastify.db
+          .select({ total: count() })
+          .from(records)
+          .where(eq(records.userId, userId)),
+      ]);
 
       return {
         records: userRecords.map((record) => ({
@@ -43,6 +53,12 @@ export const recordsRoutes: FastifyPluginAsyncZod = async (fastify) => {
           durationSeconds: record.durationSeconds,
           createdAt: record.createdAt,
         })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       };
     },
   );
