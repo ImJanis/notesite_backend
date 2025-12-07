@@ -1,4 +1,4 @@
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 
 import { records } from "../db/schema";
@@ -15,6 +15,11 @@ import {
   GetRecordsResponseSchema,
 } from "./dtos";
 
+const buildSearchQuery = (search: string) => {
+  const terms = search.trim().split(/\s+/).filter(Boolean);
+  return terms.map((term) => `${term}:*`).join(" | ");
+};
+
 export const recordsRoutes: FastifyPluginAsyncZod = async (fastify) => {
   fastify.addHook("onRequest", fastify.requireAuth);
 
@@ -28,21 +33,28 @@ export const recordsRoutes: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const userId = getSession(request).user.id;
-      const { page, limit } = request.query;
+      const { page, limit, search } = request.query;
       const offset = (page - 1) * limit;
+
+      const searchCondition = search
+        ? sql`(
+          setweight(to_tsvector('simple', coalesce(${records.title}, '')), 'A') ||
+          setweight(to_tsvector('simple', coalesce(${records.description}, '')), 'B') ||
+          setweight(to_tsvector('simple', coalesce(${records.notesInternal}, '')), 'C')
+        ) @@ to_tsquery('simple', ${buildSearchQuery(search)})`
+        : undefined;
+
+      const whereClause = and(eq(records.userId, userId), searchCondition);
 
       const [userRecords, [{ total }]] = await Promise.all([
         fastify.db
           .select()
           .from(records)
-          .where(eq(records.userId, userId))
+          .where(whereClause)
           .orderBy(desc(records.createdAt))
           .limit(limit)
           .offset(offset),
-        fastify.db
-          .select({ total: count() })
-          .from(records)
-          .where(eq(records.userId, userId)),
+        fastify.db.select({ total: count() }).from(records).where(whereClause),
       ]);
 
       return {

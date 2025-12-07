@@ -1,6 +1,6 @@
 {
-  "id": "00cc9dae-cb05-4d86-b9f3-1b23076b9f0c",
-  "prevId": "70bce53c-95cc-4619-9af9-4dd4836ca514",
+  "id": "66c11dc4-ddd6-4dd2-a5d4-708631e9228e",
+  "prevId": "00cc9dae-cb05-4d86-b9f3-1b23076b9f0c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -440,7 +440,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "title_search_index": {
+          "name": "title_search_index",
+          "columns": [
+            {
+              "expression": "to_tsvector('simple', \"title\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "description_search_index": {
+          "name": "description_search_index",
+          "columns": [
+            {
+              "expression": "to_tsvector('simple', \"description\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "notes_internal_search_index": {
+          "name": "notes_internal_search_index",
+          "columns": [
+            {
+              "expression": "to_tsvector('simple', \"notes_internal\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "records_user_id_users_id_fk": {
           "name": "records_user_id_users_id_fk",
