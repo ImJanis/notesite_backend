@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 
 import { records } from "../db/schema";
@@ -33,7 +33,8 @@ export const recordsRoutes: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const userId = getSession(request).user.id;
-      const { page, limit, search } = request.query;
+      const { page, limit, search, statuses, sortOrder, dateFrom, dateTo } =
+        request.query;
       const offset = (page - 1) * limit;
 
       const searchCondition = search
@@ -44,14 +45,25 @@ export const recordsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         ) @@ to_tsquery('simple', ${buildSearchQuery(search)})`
         : undefined;
 
-      const whereClause = and(eq(records.userId, userId), searchCondition);
+      const whereClause = and(
+        eq(records.userId, userId),
+        searchCondition,
+        statuses ? inArray(records.status, statuses) : undefined,
+        dateFrom ? gte(records.createdAt, dateFrom) : undefined,
+        dateTo ? lte(records.createdAt, dateTo) : undefined,
+      );
+
+      const orderBy =
+        sortOrder === "oldest"
+          ? asc(records.createdAt)
+          : desc(records.createdAt);
 
       const [userRecords, [{ total }]] = await Promise.all([
         fastify.db
           .select()
           .from(records)
           .where(whereClause)
-          .orderBy(desc(records.createdAt))
+          .orderBy(orderBy)
           .limit(limit)
           .offset(offset),
         fastify.db.select({ total: count() }).from(records).where(whereClause),
